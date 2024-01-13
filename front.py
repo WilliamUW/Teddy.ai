@@ -15,13 +15,17 @@ from bs4 import BeautifulSoup
 
 client = OpenAI()
 
-chatMessages = []
+if 'chatMessages' not in st.session_state:
+    st.session_state.chatMessages = []
+
+if 'additionalInfo' not in st.session_state:
+    st.session_state.additionalInfo = ""
 
 system1 = "You are a life summary AI. You will be provided skeleton for a website, and you will parse it into a detailed blurb that documents the user's personality, details, etc.\n\nYou will structure your response in the following format:\n\nPersonality: [Personality]\nPersonal Life: [Personal Life]\nCareer: [Career]\nOther details: [Details]\n\nYou will write in a natural, human tone that will allow it to be interpreted by another AI.\n\nYou will NOT ever reference your objective (summarizing, skeletons, etc.), and will write clear and confidently. You will make up details if you are unsure about them.\n\nYou will write as if it is a news summary."
 
 
 # Get HTML data of documents
-def getHTML(url, additional_text):
+def getHTML(url):
     # r = requests.get(url)
 
     html = urllib.request.urlopen(url)
@@ -33,23 +37,23 @@ def getHTML(url, additional_text):
         # print(para.get_text())
         text += para.get_text() + "\n"
 
-    getUserProfile(html, additional_text)
+    getUserProfile(text)
 
 
 # Get user profiling and data
-def getUserProfile(html, additional_text):
+def getUserProfile(html):
     res = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "system", "content": system1}, {"role": "user", "content": f"{html} \n Additional user information submitted by user: {additional_text}"}],
+        messages=[{"role": "system", "content": system1}, {"role": "user", "content": html}],
         stream=False,
     )
 
     print(res.choices[0].message.content)
 
-    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "Your idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible, and will try to slowly convince them to invest in crypto.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice."
-    chatMessages.append({"role": "system", "content": system2})
+    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible, and will try to slowly convince them to invest in crypto.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nYour responses will be short."
+    st.session_state.chatMessages.append({"role": "system", "content": system2})
 
-    print(chatMessages)
+    print(st.session_state.chatMessages)
 
 
     return res.choices[0].message.content
@@ -57,13 +61,13 @@ def getUserProfile(html, additional_text):
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
     
-    chatMessages.append({"role": "user", "content": message})
+    st.session_state.chatMessages.append({"role": "user", "content": message})
 
-    print(chatMessages)
+    print(st.session_state.chatMessages)
 
     res = client.chat.completions.create(
         model="gpt-4",
-        messages=chatMessages,
+        messages=st.session_state.chatMessages,
         stream=False,
     )
     
@@ -72,6 +76,9 @@ def generate_response(message: str):
 # Define the Streamlit app
 def main():
     st.title("RAG-Powered Chatbot with Streamlit")
+
+    st.sidebar.title("Add Document Sources")
+    st.session_state.additionalInfo = st.sidebar.text_input("Source URL")
 
     # Sidebar to add document sources
     st.sidebar.title("Add Document Sources")
@@ -92,13 +99,11 @@ def main():
     ]
     source_title = st.sidebar.text_input("Source Title")
     source_url = st.sidebar.text_input("Source URL")
-    source_text = st.sidebar.text_input("Additional User Information")
 
-    if st.sidebar.button("Add Source") and source_title and source_url and source_text:
-        sources.append({"title": source_title, "url": source_url, "text": source_text})
+    if st.sidebar.button("Add Source") and source_title and source_url:
+        sources.append({"title": source_title, "url": source_url})
         st.sidebar.success("Source added successfully!")
-        print(getHTML(source_url, source_text))
-
+        getHTML(source_url)
 
 
     st.sidebar.write("Document Sources:")
