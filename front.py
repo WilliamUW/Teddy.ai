@@ -78,24 +78,11 @@ def main():
     st.title("RAG-Powered Chatbot with Streamlit")
 
     st.sidebar.title("Add Document Sources")
-    st.session_state.additionalInfo = st.sidebar.text_input("Source URL")
+    st.session_state.additionalInfo = st.sidebar.text_input("Additional Info", key="moreInfo")
 
     # Sidebar to add document sources
     st.sidebar.title("Add Document Sources")
     sources = [
-        {
-            "title": "William Wang Linkedin",
-            "url": "https://www.linkedin.com/in/williamuw",
-        },
-        {"title": "William Wang", "url": "https://williamwangme.netlify.app/"},
-        {
-            "title": "The Attention Mechanism",
-            "url": "https://docs.cohere.com/docs/the-attention-mechanism",
-        },
-        {
-            "title": "Transformer Models",
-            "url": "https://docs.cohere.com/docs/transformer-models",
-        },
     ]
     source_title = st.sidebar.text_input("Source Title")
     source_url = st.sidebar.text_input("Source URL")
