@@ -48,7 +48,7 @@ def getHTML(url):
 
     text = ""
 
-    for para in htmlParse.find_all(["h1", "p"]):
+    for para in htmlParse.find_all(["h1", "p", "title"]):
         # print(para.get_text())
         text += para.get_text() + "\n"
 
@@ -111,6 +111,8 @@ def main():
     if st.sidebar.button("Add Source") and source_title and source_url:
         sources.append({"title": source_title, "url": source_url})
         st.sidebar.success("Source added successfully!")
+        print(getHTML(source_url))
+
 
     st.sidebar.write("Document Sources:")
     for source in sources:
