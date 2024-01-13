@@ -11,3 +11,8 @@ def welcome():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+    #give me a quest
+    #schedule
+    #other stuff 
