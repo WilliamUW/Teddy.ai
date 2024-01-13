@@ -21,7 +21,7 @@ system1 = "You are a life summary AI. You will be provided skeleton for a websit
 
 
 # Get HTML data of documents
-def getHTML(url):
+def getHTML(url, additional_text):
     # r = requests.get(url)
 
     html = urllib.request.urlopen(url)
@@ -33,14 +33,14 @@ def getHTML(url):
         # print(para.get_text())
         text += para.get_text() + "\n"
 
-    getUserProfile(text)
+    getUserProfile(html, additional_text)
 
 
 # Get user profiling and data
-def getUserProfile(html):
+def getUserProfile(html, additional_text):
     res = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "system", "content": system1}, {"role": "user", "content": html}],
+        messages=[{"role": "system", "content": system1}, {"role": "user", "content": f"{html} \n Additional user information submitted by user: {additional_text}"}],
         stream=False,
     )
 
@@ -92,11 +92,13 @@ def main():
     ]
     source_title = st.sidebar.text_input("Source Title")
     source_url = st.sidebar.text_input("Source URL")
+    source_text = st.sidebar.text_input("Additional User Information")
 
-    if st.sidebar.button("Add Source") and source_title and source_url:
-        sources.append({"title": source_title, "url": source_url})
+    if st.sidebar.button("Add Source") and source_title and source_url and source_text:
+        sources.append({"title": source_title, "url": source_url, "text": source_text})
         st.sidebar.success("Source added successfully!")
-        getHTML(source_url)
+        print(getHTML(source_url, source_text))
+
 
 
     st.sidebar.write("Document Sources:")
