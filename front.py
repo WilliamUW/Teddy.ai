@@ -19,86 +19,6 @@ messages = []
 
 system1 = "You are a life summary AI. You will be provided skeleton for a website, and you will parse it into a detailed blurb that documents the user's personality, details, etc.\n\nYou will structure your response in the following format:\n\nPersonality: [Personality]\nPersonal Life: [Personal Life]\nCareer: [Career]\nOther details: [Details]\n\nYou will write in a natural, human tone that will allow it to be interpreted by another AI.\n\nYou will NOT ever reference your objective (summarizing, skeletons, etc.), and will write clear and confidently. You will make up details if you are unsure about them.\n\nYou will write as if it is a news summary."
 
-# Define the Documents class
-class Documents:
-    def __init__(self, sources: List[Dict[str, str]]):
-        self.sources = sources
-        self.docs = []
-        self.docs_embs = []
-        self.retrieve_top_k = 10
-        self.rerank_top_k = 3
-        self.load()
-        self.embed()
-        self.index()
-
-    # Load documents from sources and chunk HTML content
-    def load(self) -> None:
-        for source in self.sources:
-            elements = partition_html(url=source["url"])
-            chunks = chunk_by_title(elements)
-            for chunk in chunks:
-                self.docs.append(
-                    {
-                        "title": source["title"],
-                        "text": str(chunk),
-                        "url": source["url"],
-                    }
-                )
-
-    # Embed the documents using the Cohere API
-    def embed(self) -> None:
-        batch_size = 90
-        self.docs_len = len(self.docs)
-
-        for i in range(0, self.docs_len, batch_size):
-            batch = self.docs[i : min(i + batch_size, self.docs_len)]
-            texts = [item["text"] for item in batch]
-            docs_embs_batch = co.embed(
-                texts=texts, model="embed-english-v3.0", input_type="search_document"
-            ).embeddings
-            self.docs_embs.extend(docs_embs_batch)
-
-    # Index the documents for efficient retrieval
-    def index(self) -> None:
-        self.idx = hnswlib.Index(space="ip", dim=1024)
-        self.idx.init_index(max_elements=self.docs_len, ef_construction=512, M=64)
-        self.idx.add_items(self.docs_embs, list(range(len(self.docs_embs))))
-
-    # Retrieve documents based on a query
-    def retrieve(self, query: str) -> List[Dict[str, str]]:
-        docs_retrieved = []
-        query_emb = co.embed(
-            texts=[query], model="embed-english-v3.0", input_type="search_query"
-        ).embeddings
-
-        doc_ids = self.idx.knn_query(query_emb, k=self.retrieve_top_k)[0][0]
-
-        docs_to_rerank = []
-        for doc_id in doc_ids:
-            docs_to_rerank.append(self.docs[doc_id]["text"])
-
-        rerank_results = co.rerank(
-            query=query,
-            documents=docs_to_rerank,
-            top_n=self.rerank_top_k,
-            model="rerank-english-v2.0",
-        )
-
-        doc_ids_reranked = []
-        for result in rerank_results:
-            doc_ids_reranked.append(doc_ids[result.index])
-
-        for doc_id in doc_ids_reranked:
-            docs_retrieved.append(
-                {
-                    "title": self.docs[doc_id]["title"],
-                    "text": self.docs[doc_id]["text"],
-                    "url": self.docs[doc_id]["url"],
-                }
-            )
-
-        return docs_retrieved
-
 
 # Define the Chatbot class
 class Chatbot:
@@ -196,11 +116,8 @@ def main():
     for source in sources:
         st.sidebar.write(f"- [{source['title']}]({source['url']})")
 
-    # Create an instance of the Documents class with the given sources
-    documents = Documents(sources)
-
     # Create an instance of the Chatbot class with the Documents instance
-    chatbot = Chatbot(documents)
+    chatbot = Chatbot()
 
     # Chatbot interaction
     st.write("Chat with the Chatbot:")
