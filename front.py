@@ -7,6 +7,9 @@ from typing import List, Dict
 from unstructured.partition.html import partition_html
 from unstructured.chunking.title import chunk_by_title
 from openai import OpenAI
+import urllib.request
+from bs4 import BeautifulSoup
+
 
 client = OpenAI()
 
@@ -137,9 +140,18 @@ class Chatbot:
 
 # Get HTML data of documents
 def getHTML(url):
-    r = requests.get(url)
+    # r = requests.get(url)
+
+    html = urllib.request.urlopen(url)
+    htmlParse = BeautifulSoup(html, 'html.parser')
+
+    text = ""
+
+    for para in htmlParse.find_all("p"):
+        print(para.get_text())
+        text+= para.get_text() + "\n"
     
-    return r.text
+    return text
 
 # Get user profiling and data
 def getUserProfile(html):
@@ -148,6 +160,10 @@ def getUserProfile(html):
         messages=[{"role": "system", "content": system}, {"role": "user", "content": html}],
         stream=False
     )
+
+    # Saving context to text
+    with open("context.txt", "w") as text_file:
+        text_file.write(res.choices[0].message.content)
 
     return res.choices[0].message.content
 
