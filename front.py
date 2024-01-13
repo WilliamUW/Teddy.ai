@@ -2,13 +2,18 @@ import cohere
 import hnswlib
 import streamlit as st
 import uuid
+import requests
 from typing import List, Dict
 from unstructured.partition.html import partition_html
 from unstructured.chunking.title import chunk_by_title
+from openai import OpenAI
+
+client = OpenAI()
 
 # Initialize the Cohere client
 co = cohere.Client("5KejWF1NDnUB8suoSV33caIXdcG1LicFccDmH6lk")
 
+system = "You are a life summary AI. You will be provided skeleton for a website, and you will parse it into a detailed blurb that documents the user's personality, details, etc.\n\nYou will structure your response in the following format:\n\nPersonality: [Personality]\nPersonal Life: [Personal Life]\nCareer: [Career]\nOther details: [Details]\n\nYou will write in a natural, human tone that will allow it to be interpreted by another AI.\n\nYou will NOT ever reference your objective (summarizing, skeletons, etc.), and will write clear and confidently. You will make up details if you are unsure about them.\n\nYou will write as if it is a news summary."
 
 # Define the Documents class
 class Documents:
@@ -129,6 +134,22 @@ class Chatbot:
 
         return retrieved_docs
 
+
+# Get HTML data of documents
+def getHTML(url):
+    r = requests.get(url)
+    
+    return r.text
+
+# Get user profiling and data
+def getUserProfile(html):
+    res = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": html}],
+        stream=False
+    )
+
+    return res.choices[0].message.content
 
 # Define the Streamlit app
 def main():
