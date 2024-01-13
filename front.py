@@ -55,14 +55,6 @@ def getHTML(url):
     return text
 
 
-def returnQuest(data):
-    res = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": data}],
-        stream=False
-    )
-
-
 # Get user profiling and data
 def getUserProfile(html):
     res = client.chat.completions.create(
@@ -126,16 +118,8 @@ def main():
         st.write("Chat:", user_input)
         response = chatbot.generate_response(user_input)
 
-        chatbot_response = ""
-        for event in response:
-            if event.event_type == "text-generation":
-                chatbot_response += f"{event.text}"
-
-            if event.event_type == "citation-generation":
-                chatbot_response += f"{event.citations}"
-
         st.write(
-            f"<div style='background-color:#f4f4f4;padding:10px;margin:10px;border-radius:5px;'>{chatbot_response}</div>",
+            f"<div style='background-color:#f4f4f4;padding:10px;margin:10px;border-radius:5px;'>{response}</div>",
             unsafe_allow_html=True,
         )
 
