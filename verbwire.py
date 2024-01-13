@@ -22,6 +22,8 @@ async def mintNFT(name, description, imageUrl):
 
     print("Mint success!")
 
+    return response
+
 
 name = input("Name: ")
 description = input("Description: ")
