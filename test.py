@@ -8,14 +8,17 @@ dotenv.load_dotenv(".env")
 
 
 url = "https://github.com/stampixel?tab=repositories"
-
 html = urllib.request.urlopen(url)
-
 htmlParse = BeautifulSoup(html, 'html.parser')
 
 # getting all the paragraphs
-for para in htmlParse.find_all("p"):
+for para in htmlParse.find_all(["h1", "b", "p", "h2"]):
     print(para.get_text())
+
+# print(htmlParse.get_text())
+
+with open("context.txt", "w") as text_file:
+    text_file.write(htmlParse.get_text())
 
 
 # import requests

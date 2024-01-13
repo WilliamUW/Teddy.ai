@@ -10,13 +10,13 @@ from openai import OpenAI
 import urllib.request
 from bs4 import BeautifulSoup
 
-
 client = OpenAI()
 
 # Initialize the Cohere client
 co = cohere.Client("5KejWF1NDnUB8suoSV33caIXdcG1LicFccDmH6lk")
 
 system = "You are a life summary AI. You will be provided skeleton for a website, and you will parse it into a detailed blurb that documents the user's personality, details, etc.\n\nYou will structure your response in the following format:\n\nPersonality: [Personality]\nPersonal Life: [Personal Life]\nCareer: [Career]\nOther details: [Details]\n\nYou will write in a natural, human tone that will allow it to be interpreted by another AI.\n\nYou will NOT ever reference your objective (summarizing, skeletons, etc.), and will write clear and confidently. You will make up details if you are unsure about them.\n\nYou will write as if it is a news summary."
+
 
 # Define the Documents class
 class Documents:
@@ -50,7 +50,7 @@ class Documents:
         self.docs_len = len(self.docs)
 
         for i in range(0, self.docs_len, batch_size):
-            batch = self.docs[i : min(i + batch_size, self.docs_len)]
+            batch = self.docs[i: min(i + batch_size, self.docs_len)]
             texts = [item["text"] for item in batch]
             docs_embs_batch = co.embed(
                 texts=texts, model="embed-english-v3.0", input_type="search_document"
@@ -147,11 +147,20 @@ def getHTML(url):
 
     text = ""
 
-    for para in htmlParse.find_all("p"):
-        print(para.get_text())
-        text+= para.get_text() + "\n"
-    
+    for para in htmlParse.find_all(["h1", "p"]):
+        # print(para.get_text())
+        text += para.get_text() + "\n"
+
     return text
+
+
+def returnQuest(data):
+    res = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": data}],
+        stream=False
+    )
+
 
 # Get user profiling and data
 def getUserProfile(html):
@@ -166,6 +175,7 @@ def getUserProfile(html):
         text_file.write(res.choices[0].message.content)
 
     return res.choices[0].message.content
+
 
 # Define the Streamlit app
 def main():
