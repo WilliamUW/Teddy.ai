@@ -39,7 +39,7 @@ def user_input():
 @app.route('/transcribe', methods=["GET", 'POST'])
 def transcribe(filename):
     text = transcriber(filename)
-    return jsonify({"response": text})
+    return text
 
 @app.route('/talk', methods=["GET", 'POST'])
 def talk(text0):

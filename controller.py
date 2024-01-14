@@ -2,13 +2,16 @@ import keyboard
 import json
 import requests
 from app import user_input, talk
-from front import setup, getHTML, main, generate_response
 
 ngrok = "http://127.0.0.1:5000/"
 
+print("test 1")
 setup()
+print("test 2")
 main()
+print("test 3")
 getHTML("https://github.com/iankorovinsky")
+print("test 4")
 
 
 def test():

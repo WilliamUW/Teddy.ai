@@ -69,12 +69,15 @@ def getUserProfile(html):
     )
 
     print(res.choices[0].message.content)
-
+    print("choice 1")
+    if "additionalInfo" not in st.session_state:
+        st.session_state.additionalInfo = ""
     system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nYour responses will be short."
+    print("choice 2")
     st.session_state.chatMessages.append({"role": "system", "content": system2})
-
+    print("choice 3")
     print(st.session_state.chatMessages)
-
+    print("choice 4")
 
     return res.choices[0].message.content
 
@@ -170,7 +173,7 @@ def generate_response(message: str):
             )
 
             return secondRes.choices[0].message.content
-    
+    print(res.choices[0].message.content)
     return res.choices[0].message.content
 
 # Define the Streamlit app
@@ -212,3 +215,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
