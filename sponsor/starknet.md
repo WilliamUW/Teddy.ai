@@ -9,7 +9,4 @@ We use starknet to mint a unique Teddy Bear NFT for every single teddy bear that
 
 
 - Teddy.ai qualifies for the Starknet prize by leveraging Starknet to mint unique Teddy Bear NFTs for each teddy bear, immutably recording their owner on the blockchain.
-- This innovative use of Starknet creates a one-of-a-kind NFT collection on the Starknet network, enhancing the ownership and authenticity of Teddy.ai companions.
-- By integrating Starknet, Teddy.ai demonstrates its commitment to blockchain technology and its potential to revolutionize the world of plush toys and companionship.
-- This project not only utilizes Starknet effectively but also aligns with the spirit of the competition, showcasing the capabilities of blockchain for real-world applications that bring joy and value to users.
-- Teddy.ai's vision and use of Starknet highlight the exciting possibilities of blockchain in the toy industry, making it a strong contender for the Starknet prize.
+- We intend to utilize Starknet to create a one-of-a-kind NFT collection on the Starknet network, enhancing the ownership and authenticity of Teddy.ai companions with the loyalties going to support Children Charity organizations.
