@@ -25,6 +25,5 @@ def capture_photo(camera_index=0, save_path='captured_photo.jpg'):
 
     # Release the camera
     cap.release()
+    return save_path
 
-if __name__ == "__main__":
-    capture_photo()
