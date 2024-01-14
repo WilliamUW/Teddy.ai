@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from typing import List, Dict
+from helpers.voicing import play_voice
 from unstructured.partition.html import partition_html
 from unstructured.chunking.title import chunk_by_title
 from openai import OpenAI
@@ -178,7 +179,7 @@ def generate_response(message: str):
 
 # Define the Streamlit app
 def main():
-    st.title("RAG-Powered Chatbot with Streamlit")
+    st.title("Welcome to Teddy.ai!")
 
     st.sidebar.title("Add Document Sources")
     st.session_state.additionalInfo = st.sidebar.text_input("Additional Info", key="moreInfo")
@@ -212,6 +213,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        play_voice(response)
 
 if __name__ == "__main__":
     main()
