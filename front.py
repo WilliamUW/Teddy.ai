@@ -60,8 +60,8 @@ def getUserProfile(html):
 
     return res.choices[0].message.content
 
-def send_money(name: str, amount: int):
-    flow_util.open_transaction_page(name, amount)
+def send_money(name: str, amount: str):
+    flow_util.open_transaction_page(name, int(amount))
     print("worked")
 
 
@@ -87,7 +87,7 @@ def generate_response(message: str):
                         "description": "The name of the recipient."
                     },
                     "amount": {
-                        "type": int,
+                        "type": "string",
                         "description": "The amount of flow tokens that need to be sent."
                     }
                 },
@@ -112,7 +112,7 @@ def generate_response(message: str):
             st.session_state.chatMessages.append(
                 {
                     "tool_call_id": call.id,
-                    "role": "tool",
+                    "role": "function",
                     "name": call.function.name,
                     "content": functionResponse,
                 }
