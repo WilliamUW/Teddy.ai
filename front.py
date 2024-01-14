@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from typing import List, Dict
+from helpers.voicing import play_voice
 from unstructured.partition.html import partition_html
 from unstructured.chunking.title import chunk_by_title
 from openai import OpenAI
@@ -8,11 +9,17 @@ import os
 from dotenv import load_dotenv
 import json
 from helpers.camera import capture_photo
+from PIL import Image
 import webbrowser
 import asyncio
 from helpers.verbwire import mintNFT
 import urllib.request
 from bs4 import BeautifulSoup
+
+from linkedin import Linkedin
+import dotenv
+import os
+import re
 
 import flow_util
 
@@ -46,18 +53,110 @@ system1 = "You are a life summary AI. You will be provided skeleton for a websit
 
 # Get HTML data of documents
 def getHTML(url):
-    # r = requests.get(url)
+    api = Linkedin(os.getenv("GMAIL"), os.getenv("LINKEDIN_PASSWORD"))
 
-    html = urllib.request.urlopen(url)
-    htmlParse = BeautifulSoup(html, 'html.parser')
+    matches = re.findall(r"www\.linkedin\..*/in/([A-Za-z0-9_-]+)", url)
 
-    text = ""
 
-    for para in htmlParse.find_all(["h1", "p", "title"]):
-        # print(para.get_text())
-        text += para.get_text() + "\n"
+    if len(matches) != 0:
+        profile = api.get_profile(matches[0])
+    else:
+        profile = api.get_profile(url)
 
-    getUserProfile(text)
+    if profile:
+        headline = profile["headline"].strip() if "headline" in profile and profile["headline"] else "Not listed"
+        industryName = profile["industryName"].strip() if "industryName" in profile and profile[
+            "industryName"] else "Not listed"
+        name = profile["firstName"] + " " + profile["lastName"]
+        country = profile["locationName"].strip() if "locationName" in profile and profile["locationName"] else "Not listed"
+        summary = profile["summary"].strip() if "summary" in profile and profile["summary"] else "Not listed"
+        experience = profile["experience"] if "experience" in profile and profile["experience"] else None
+        volunteering = profile["volunteer"] if "volunteer" in profile and profile["volunteer"] else None
+        education = profile["education"] if "education" in profile and profile["education"] else None
+        awards = profile["honors"] if "honors" in profile else None
+
+        print(name, country, summary, experience, volunteering, education, awards)
+
+        def formatList(l, keys):
+            res = ""
+            for item_num, item in enumerate(l):
+                for i, key in enumerate(keys.keys()):
+                    if (key not in item or not item[key]): continue
+                    # res += "" if i != 0 else ""
+                    res += keys[key] + ": " + item[key].strip() + ("\n" if i != len(keys) - 1 else "")
+                if item_num != len(l) - 1:
+                    res += "\n"
+            return res
+
+        def formatExperience(experience, keys):
+            res = []
+            for item in experience:
+                temp = ""
+                for i, key in enumerate(keys.keys()):
+                    if (key not in item or not item[key]): continue
+                    # res += "" if i != 0 else ""
+                    temp += keys[key] + ": " + item[key].strip() + "\n"
+                time_period_valid = item['timePeriod'] and 'startDate' in item['timePeriod'] and item['timePeriod'][
+                    'startDate']
+                month_valid = time_period_valid and 'month' in item['timePeriod']['startDate'] and \
+                              item['timePeriod']['startDate']['month']
+                year_valid = time_period_valid and 'year' in item['timePeriod']['startDate'] and \
+                             item['timePeriod']['startDate']['year']
+                date_str = f"{item['timePeriod']['startDate']['month']:0>2}/{item['timePeriod']['startDate']['year']}" if time_period_valid and month_valid and year_valid else "Not listed"
+                temp += f"Starting Date: " + date_str
+                res.append((temp,
+                            int(item['timePeriod']['startDate']['year']) if time_period_valid and year_valid else None,
+                            int(item['timePeriod']['startDate'][
+                                    'month']) if time_period_valid and month_valid else None))
+
+            return list(reversed(res))
+
+        formatted_education = formatList(education, {'schoolName': 'School name',
+                                                     'description': 'Description'}) if education else "Not listed"
+        formatted_volunteering = formatList(volunteering, {'companyName': 'Company name', 'role': 'Role',
+                                                           'description': 'Description'}) if volunteering else "Not listed"
+        formatted_awards = formatList(awards, {'title': 'Title', 'issuer': 'Issuer',
+                                               'description': "Description"}) if awards else "Not listed"
+        formatted_experience = formatExperience(experience, {'companyName': 'Company name', 'title': 'Title',
+                                                             'description': 'Description'}) if experience else []
+
+        formatting_string = """Name: {name}
+
+        Industry: {industryName}
+        Country: {country}
+        Headline: {headline}
+        Summary: {summary}
+        ---
+        Volunteering:
+        {formatted_volunteering}
+        ---
+        Honors & Awards:
+        {formatted_awards}
+        ---
+        Education:
+        {formatted_education}
+        ---
+        Experience:
+        {formatted_experience}
+        """
+
+        getUserProfile(formatting_string.format(name=name, country=country, industryName=industryName,
+                                         headline=headline, summary=summary,
+                                         formatted_volunteering=formatted_volunteering,
+                                         formatted_education=formatted_education, formatted_awards=formatted_awards, formatted_experience=formatted_experience))
+
+    else:
+
+        html = urllib.request.urlopen(url)
+        htmlParse = BeautifulSoup(html, 'html.parser')
+
+        text = ""
+
+        for para in htmlParse.find_all(["h1", "p", "title"]):
+            # print(para.get_text())
+            text += para.get_text() + "\n"
+
+        getUserProfile(text)
 
 
 # Get user profiling and data
@@ -78,15 +177,20 @@ def getUserProfile(html):
     return res.choices[0].message.content
 
 def send_money(name: str, amount: str):
-    flow_util.open_transaction_page(name, int(amount))
+    flow_util.open_transaction_page(name, amount + ".0")
     print("worked")
 
     return "Sent " + amount + " Flow tokens to " + name + "!"
 
 def take_photo():
+    global photoExists
     print("Initiating capture... wait for camera to load.")
 
     capture_photo()
+    image = Image.open("captured_photo.jpg")
+
+    # Display the image using Streamlit
+    st.image(image, caption='Minting this photo/memory into an NFT!', use_column_width=True)
     response = asyncio.run(mintNFT("Teddy Bear #1", "Memory of user with Teddy.ai, DeltaHacks 2023", "https://i.ebayimg.com/images/g/vlIAAOSwikBcR0nA/s-l1200.jpg"))
     response = json.loads(response)
     try:
@@ -95,7 +199,7 @@ def take_photo():
         url = "https://goerli.etherscan.io/token/0x791b1e3ba2088ecce017d1c60934804868691f67?a=0x0e5d299236647563649526cfa25c39d6848101f5"
 
     webbrowser.open_new(url)
-
+    
     print("pic mf")
 
     return "Captured photo!"
@@ -221,7 +325,16 @@ def generate_response(message: str):
 
 # Define the Streamlit app
 def main():
-    st.title("RAG-Powered Chatbot with Streamlit")
+
+    st.title("start/stop buttons")
+    if st.button("Start"):
+        print("stat button")
+    if st.button("Stop"):
+        print("stop button")
+
+
+
+    st.title("Welcome to Teddy.ai!")
 
     st.sidebar.title("Add Document Sources")
     st.session_state.additionalInfo = st.sidebar.text_input("Additional Info", key="moreInfo")
@@ -255,6 +368,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        play_voice(response)
 
 if __name__ == "__main__":
     main()

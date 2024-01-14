@@ -6,8 +6,8 @@ const url = `https://starknet-mainnet.g.alchemy.com/v2/${apiKey}`;
 const payload = {
   jsonrpc: '2.0',
   id: 1,
-  method: 'starknet_blockNumber',
-  params: []
+  method: 'starknet_getTransactionReceipt',
+  params: ["0xe703a1507781952ce4f63cbf1985f6f5c4e2f51fb442c31c6679dfd8e09ee06d"]
 };
 
 axios.post(url, payload)
