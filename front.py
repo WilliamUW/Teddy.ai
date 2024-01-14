@@ -326,11 +326,11 @@ def generate_response(message: str):
 # Define the Streamlit app
 def main():
 
-    st.title("start/stop buttons")
-    if st.button("Start"):
-        print("stat button")
-    if st.button("Stop"):
-        print("stop button")
+    # st.title("start/stop buttons")
+    # if st.button("Start"):
+    #     print("stat button")
+    # if st.button("Stop"):
+    #     print("stop button")
 
 
 
@@ -363,12 +363,12 @@ def main():
         st.write("Chat:", user_input)
         response = generate_response(user_input)
 
-        st.write(
-            f"<div style='background-color:#f4f4f4;padding:10px;margin:10px;border-radius:5px;'>{response}</div>",
-            unsafe_allow_html=True,
-        )
-
-        play_voice(response)
+        if ("photo" not in response.lower() and "flow" not in response.lower()):
+            st.write(
+                f"<div style='background-color:#f4f4f4;padding:10px;margin:10px;border-radius:5px;'>{response}</div>",
+                unsafe_allow_html=True,
+            )
+            play_voice(response)
 
 if __name__ == "__main__":
     main()
