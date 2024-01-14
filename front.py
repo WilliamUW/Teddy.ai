@@ -69,21 +69,19 @@ def getUserProfile(html):
     )
 
     print(res.choices[0].message.content)
-    print("choice 1")
-    if "additionalInfo" not in st.session_state:
-        st.session_state.additionalInfo = ""
-    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nYour responses will be short."
-    print("choice 2")
+    
+    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nOccasionally, when asked (or if, for example, the user is bored), you will provide the user with a 'quest' - a question that matches their level of learning.\n\nYour responses will be short.\n\nYou will pretend that you can (and do) perform the following actions:\nTake a photo\nSend crypto money"
     st.session_state.chatMessages.append({"role": "system", "content": system2})
-    print("choice 3")
+    
     print(st.session_state.chatMessages)
-    print("choice 4")
-
+    
     return res.choices[0].message.content
 
 def send_money(name: str, amount: str):
     flow_util.open_transaction_page(name, int(amount))
     print("worked")
+
+    return "Sent " + amount + " Flow tokens to " + name + "!"
 
 def take_photo():
     print("Initiating capture... wait for camera to load.")
@@ -100,7 +98,25 @@ def take_photo():
 
     print("pic mf")
 
-    return response.json()
+    return "Captured photo!"
+
+def verify_quest_answer(answer: str, difficulty: str):
+    print ("Quest difficulty level: " + difficulty)
+
+    flow = 0
+    if (str == "Easy"):
+        flow = 1
+    elif (str == "Medium"):
+        flow = 2
+    elif (str == "Hard"):
+        flow = 3
+    else:
+        flow = 4
+
+    if (answer == "yes"): 
+        return "Sent " + str(flow) + " Flow tokens!"
+    else:
+        return "Your answer is wrong."
 
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
@@ -140,40 +156,67 @@ def generate_response(message: str):
                     "description": "Take a photo of the child",
                     "parameters": {}
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "verify_quest_answer", 
+                    "description": "Verifies the child's answer to a given 'quest' question. Called the moment an answer to a quest is given.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "answer": {
+                                "type": "string",
+                                "description": "A yes/no as to whether the given question was answered correctly."
+                            },
+                            "difficulty": {
+                                "type": "string", 
+                                "description": "The difficulty ('Easy'/'Medium'/'Hard'/'Demon') of the quest (question) relative to the child's level of learning."
+                            }
+                        }
+                    }
+                }
             }
         ],
     )
 
+    # st.session_state.chatMessages.append(res.choices[0].message)
     calls = res.choices[0].message.tool_calls
 
     if (calls):
         availableFunctions = {
             "send_money": send_money,
             "take_photo": take_photo,
+            "verify_quest_answer": verify_quest_answer,
         }
-        st.session_state.chatMessages.append(res.choices[0].message)
 
         for call in calls:
             functionCall = availableFunctions[call.function.name]
             functionArgs = json.loads(call.function.arguments)
             functionResponse = functionCall(**functionArgs)
 
-            st.session_state.chatMessages.append(
-                {
-                    "tool_call_id": call.id,
-                    "role": "function",
-                    "name": call.function.name,
-                    "content": functionResponse,
-                }
-            )
+            # st.session_state.chatMessages.append(
+            #     {
+            #         "tool_call_id": call.tool_call_id,
+            #         "role": "function",
+            #         "name": call.function.name,
+            #         "content": functionResponse,
+            #     }
+            # )
+
+            st.session_state.chatMessages.append({"role": "assistant", "content": functionResponse})
 
             secondRes = client.chat.completions.create(
                 model="gpt-4",
                 messages=st.session_state.chatMessages,
             )
 
-            return secondRes.choices[0].message.content
+            return functionResponse + " " + secondRes.choices[0].message.content
+    else: 
+        st.session_state.chatMessages.append(res.choices[0].message)
+    
     print(res.choices[0].message.content)
+
     return res.choices[0].message.content
 
 # Define the Streamlit app
