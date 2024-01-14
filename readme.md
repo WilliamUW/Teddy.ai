@@ -2,6 +2,10 @@
 
 ## Inspiration 🌈
 
+According to mentalhealth.uk, over 45% of children asked said they felt lonely 'often' or 'some of the time'. 
+
+That is way too high in our team's opinion.
+
 At Teddy.ai, our inspiration is simple yet powerful: to ensure that no child or individual ever feels lonely. We believe in harnessing the potential of technology to create companionship, connection, and a brighter future for everyone.
 
 ## What it does 🐻
