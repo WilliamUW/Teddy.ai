@@ -178,6 +178,15 @@ def generate_response(message: str):
 
 # Define the Streamlit app
 def main():
+
+    st.title("RAG-Powered Chatbot with Streamlit")
+    if st.button("Start"):
+        print("stat button")
+    if st.button("Stop"):
+        print("stop button")
+
+
+
     st.title("RAG-Powered Chatbot with Streamlit")
 
     st.sidebar.title("Add Document Sources")
