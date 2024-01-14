@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 import json
 from helpers.camera import capture_photo
+from PIL import Image
 import webbrowser
 import asyncio
 from helpers.verbwire import mintNFT
@@ -86,9 +87,14 @@ def send_money(name: str, amount: str):
     print("worked")
 
 def take_photo():
+    global photoExists
     print("Initiating capture... wait for camera to load.")
 
     capture_photo()
+    image = Image.open("captured_photo.jpg")
+
+    # Display the image using Streamlit
+    st.image(image, caption='Minting this photo/memory into an NFT!', use_column_width=True)
     response = asyncio.run(mintNFT("Teddy Bear #1", "Memory of user with Teddy.ai, DeltaHacks 2023", "https://i.ebayimg.com/images/g/vlIAAOSwikBcR0nA/s-l1200.jpg"))
     response = json.loads(response)
     try:
@@ -97,7 +103,7 @@ def take_photo():
         url = "https://goerli.etherscan.io/token/0x791b1e3ba2088ecce017d1c60934804868691f67?a=0x0e5d299236647563649526cfa25c39d6848101f5"
 
     webbrowser.open_new(url)
-
+    
     print("pic mf")
 
     return response.json()
