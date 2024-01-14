@@ -1,6 +1,6 @@
 import cv2
 
-def capture_photo(camera_index=0, save_path='captured_photo.jpg'):
+def capture_photo(camera_index=2, save_path='captured_photo.jpg'):
     # Open the camera
     cap = cv2.VideoCapture(camera_index)
 

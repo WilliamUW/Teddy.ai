@@ -48,6 +48,7 @@ def talk():
 
 @app.route('/capture', methods=["GET", 'POST'])
 def capture():
+    print("Initiating capture... wait for camera to load.")
     capture_photo()
     response = asyncio.run(mintNFT("Teddy Bear #1", "Memory of user with Teddy.ai, DeltaHacks 2023", "https://i.ebayimg.com/images/g/vlIAAOSwikBcR0nA/s-l1200.jpg"))
     response = json.loads(response)
