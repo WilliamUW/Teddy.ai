@@ -7,6 +7,8 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
+import flow_util
+
 load_dotenv()
 
 OpenAI.api_key = os.getenv('OPENAI_API_KEY')
@@ -50,13 +52,18 @@ def getUserProfile(html):
 
     print(res.choices[0].message.content)
 
-    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible, and will try to slowly convince them to invest in crypto.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nYour responses will be short."
+    system2 = "You are a talking teddy bear. The following is a profile of the user you are talking to:\n\n" + res.choices[0].message.content + "\nAdditional Info: " + st.session_state.additionalInfo + "\n\nYour idea is to act as a companion so that no child will ever feel lonely again. You will be as parasocial as possible.\n\nYou will use a very human tone, as if you are a real, magical, childhood teddy bear. You will NOT use a robotic voice.\n\nYour responses will be short."
     st.session_state.chatMessages.append({"role": "system", "content": system2})
 
     print(st.session_state.chatMessages)
 
 
     return res.choices[0].message.content
+
+def send_money(name: str, amount: int):
+    flow_util.open_transaction_page(name, amount)
+    print("worked")
+
 
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
@@ -69,7 +76,54 @@ def generate_response(message: str):
         model="gpt-4",
         messages=st.session_state.chatMessages,
         stream=False,
+        tools=[{
+            "name": "send_money",
+            "description": "Send cryptocurrency to a specific person",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the recipient."
+                    },
+                    "amount": {
+                        "type": int,
+                        "description": "The amount of flow tokens that need to be sent."
+                    }
+                },
+                "required": ["amount"]
+            }
+        }],
     )
+
+    calls = res.choices[0].message.tool_calls
+
+    if (calls):
+        availableFunctions = {
+            "send_money": send_money,
+        }
+        st.session_state.chatMessages.append(res.choices[0].message)
+
+        for call in calls:
+            functionCall = availableFunctions[call.function.name]
+            functionArgs = json.loads(call.function.arguments)
+            functionResponse = functionCall(**functionArgs)
+
+            st.session_state.chatMessages.append(
+                {
+                    "tool_call_id": call.id,
+                    "role": "tool",
+                    "name": call.function.name,
+                    "content": functionResponse,
+                }
+            )
+
+            secondRes = client.chat.completions.create(
+                model="gpt-4",
+                messages=st.session_state.chatMessages,
+            )
+
+            return secondRes.choices[0].message.content
     
     return res.choices[0].message.content
 

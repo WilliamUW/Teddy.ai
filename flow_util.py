@@ -7,4 +7,4 @@ def open_transaction_page(recipient_name, amount):
     url_with_params = f"{base_url}?recipient={address}&amount={amount}"
     webbrowser.open(url_with_params)
 
-open_transaction_page("Ian", 0.5)
+# open_transaction_page("Ian", 0.5)
