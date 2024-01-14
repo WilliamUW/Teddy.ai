@@ -42,11 +42,12 @@ def transcribe(filename):
     return jsonify({"response": text})
 
 @app.route('/talk', methods=["GET", 'POST'])
-def talk():
-    text = play_voice("I like stickers")
+def talk(text0):
+    text = play_voice(text0)
     return jsonify({"response": "success"})
 
 def capture():
+    talk("I'm taking a photo!")
     print("Initiating capture... wait for camera to load.")
     capture_photo()
     response = asyncio.run(mintNFT("Teddy Bear #1", "Memory of user with Teddy.ai, DeltaHacks 2023", "https://i.ebayimg.com/images/g/vlIAAOSwikBcR0nA/s-l1200.jpg"))
@@ -57,5 +58,6 @@ def capture():
         url = "https://goerli.etherscan.io/token/0x791b1e3ba2088ecce017d1c60934804868691f67?a=0x0e5d299236647563649526cfa25c39d6848101f5"
 
     webbrowser.open_new(url)
+    talk("Your memory was minted as an NFT!")
 
     return response.json()

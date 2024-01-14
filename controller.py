@@ -1,9 +1,14 @@
 import keyboard
 import json
 import requests
+from app import user_input, talk
+from front import setup, getHTML, main, generate_response
 
 ngrok = "http://127.0.0.1:5000/"
-params = {"speed": "0.95"}
+
+setup()
+main()
+getHTML("https://github.com/iankorovinsky")
 
 
 def test():
@@ -11,9 +16,10 @@ def test():
     response = requests.get(url)
 
 def speak():
-    url = ngrok + "user_input"
-    response = requests.get(url)
-    print(response.json())
+    text = user_input()
+    teddy_text = generate_response(text)
+    talk(teddy_text)
+    print("Done sequence.")
 
 def capture():
     url = ngrok + "capture"
