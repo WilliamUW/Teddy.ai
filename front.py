@@ -271,7 +271,7 @@ def generate_response(message: str):
                         "properties": {
                             "answer": {
                                 "type": "string",
-                                "description": "A yes/no as to whether the given question was answered correctly."
+                                "description": "A 'yes'/'no' as to whether the given question was answered correctly."
                             },
                             "difficulty": {
                                 "type": "string", 
