@@ -16,6 +16,11 @@ from helpers.verbwire import mintNFT
 import urllib.request
 from bs4 import BeautifulSoup
 
+from linkedin import Linkedin
+import dotenv
+import os
+import re
+
 import flow_util
 
 def setup():
@@ -48,18 +53,110 @@ system1 = "You are a life summary AI. You will be provided skeleton for a websit
 
 # Get HTML data of documents
 def getHTML(url):
-    # r = requests.get(url)
+    api = Linkedin(os.getenv("GMAIL"), os.getenv("LINKEDIN_PASSWORD"))
 
-    html = urllib.request.urlopen(url)
-    htmlParse = BeautifulSoup(html, 'html.parser')
+    matches = re.findall(r"www\.linkedin\..*/in/([A-Za-z0-9_-]+)", url)
 
-    text = ""
 
-    for para in htmlParse.find_all(["h1", "p", "title"]):
-        # print(para.get_text())
-        text += para.get_text() + "\n"
+    if len(matches) != 0:
+        profile = api.get_profile(matches[0])
+    else:
+        profile = api.get_profile(url)
 
-    getUserProfile(text)
+    if profile:
+        headline = profile["headline"].strip() if "headline" in profile and profile["headline"] else "Not listed"
+        industryName = profile["industryName"].strip() if "industryName" in profile and profile[
+            "industryName"] else "Not listed"
+        name = profile["firstName"] + " " + profile["lastName"]
+        country = profile["locationName"].strip() if "locationName" in profile and profile["locationName"] else "Not listed"
+        summary = profile["summary"].strip() if "summary" in profile and profile["summary"] else "Not listed"
+        experience = profile["experience"] if "experience" in profile and profile["experience"] else None
+        volunteering = profile["volunteer"] if "volunteer" in profile and profile["volunteer"] else None
+        education = profile["education"] if "education" in profile and profile["education"] else None
+        awards = profile["honors"] if "honors" in profile else None
+
+        print(name, country, summary, experience, volunteering, education, awards)
+
+        def formatList(l, keys):
+            res = ""
+            for item_num, item in enumerate(l):
+                for i, key in enumerate(keys.keys()):
+                    if (key not in item or not item[key]): continue
+                    # res += "" if i != 0 else ""
+                    res += keys[key] + ": " + item[key].strip() + ("\n" if i != len(keys) - 1 else "")
+                if item_num != len(l) - 1:
+                    res += "\n"
+            return res
+
+        def formatExperience(experience, keys):
+            res = []
+            for item in experience:
+                temp = ""
+                for i, key in enumerate(keys.keys()):
+                    if (key not in item or not item[key]): continue
+                    # res += "" if i != 0 else ""
+                    temp += keys[key] + ": " + item[key].strip() + "\n"
+                time_period_valid = item['timePeriod'] and 'startDate' in item['timePeriod'] and item['timePeriod'][
+                    'startDate']
+                month_valid = time_period_valid and 'month' in item['timePeriod']['startDate'] and \
+                              item['timePeriod']['startDate']['month']
+                year_valid = time_period_valid and 'year' in item['timePeriod']['startDate'] and \
+                             item['timePeriod']['startDate']['year']
+                date_str = f"{item['timePeriod']['startDate']['month']:0>2}/{item['timePeriod']['startDate']['year']}" if time_period_valid and month_valid and year_valid else "Not listed"
+                temp += f"Starting Date: " + date_str
+                res.append((temp,
+                            int(item['timePeriod']['startDate']['year']) if time_period_valid and year_valid else None,
+                            int(item['timePeriod']['startDate'][
+                                    'month']) if time_period_valid and month_valid else None))
+
+            return list(reversed(res))
+
+        formatted_education = formatList(education, {'schoolName': 'School name',
+                                                     'description': 'Description'}) if education else "Not listed"
+        formatted_volunteering = formatList(volunteering, {'companyName': 'Company name', 'role': 'Role',
+                                                           'description': 'Description'}) if volunteering else "Not listed"
+        formatted_awards = formatList(awards, {'title': 'Title', 'issuer': 'Issuer',
+                                               'description': "Description"}) if awards else "Not listed"
+        formatted_experience = formatExperience(experience, {'companyName': 'Company name', 'title': 'Title',
+                                                             'description': 'Description'}) if experience else []
+
+        formatting_string = """Name: {name}
+
+        Industry: {industryName}
+        Country: {country}
+        Headline: {headline}
+        Summary: {summary}
+        ---
+        Volunteering:
+        {formatted_volunteering}
+        ---
+        Honors & Awards:
+        {formatted_awards}
+        ---
+        Education:
+        {formatted_education}
+        ---
+        Experience:
+        {formatted_experience}
+        """
+
+        getUserProfile(formatting_string.format(name=name, country=country, industryName=industryName,
+                                         headline=headline, summary=summary,
+                                         formatted_volunteering=formatted_volunteering,
+                                         formatted_education=formatted_education, formatted_awards=formatted_awards, formatted_experience=formatted_experience))
+
+    else:
+
+        html = urllib.request.urlopen(url)
+        htmlParse = BeautifulSoup(html, 'html.parser')
+
+        text = ""
+
+        for para in htmlParse.find_all(["h1", "p", "title"]):
+            # print(para.get_text())
+            text += para.get_text() + "\n"
+
+        getUserProfile(text)
 
 
 # Get user profiling and data
