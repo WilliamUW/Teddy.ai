@@ -6,6 +6,7 @@ from unstructured.chunking.title import chunk_by_title
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import json
 
 import flow_util
 
@@ -67,7 +68,6 @@ def send_money(name: str, amount: str):
 
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
-    
     st.session_state.chatMessages.append({"role": "user", "content": message})
 
     print(st.session_state.chatMessages)
@@ -77,21 +77,23 @@ def generate_response(message: str):
         messages=st.session_state.chatMessages,
         stream=False,
         tools=[{
-            "name": "send_money",
-            "description": "Send cryptocurrency to a specific person",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "The name of the recipient."
-                    },
-                    "amount": {
-                        "type": "string",
-                        "description": "The amount of flow tokens that need to be sent."
+            "type": "function",
+            "function": {
+                "name": "send_money",
+                "description": "Send cryptocurrency to a specific person",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the recipient."
+                        },
+                        "amount": {
+                            "type": "string",
+                            "description": "The amount of flow tokens that need to be sent."
+                        }
                     }
-                },
-                "required": ["amount"]
+                }
             }
         }],
     )
