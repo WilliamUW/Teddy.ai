@@ -83,7 +83,7 @@ def getUserProfile(html):
     return res.choices[0].message.content
 
 def send_money(name: str, amount: str):
-    flow_util.open_transaction_page(name, int(amount))
+    flow_util.open_transaction_page(name, amount + ".0")
     print("worked")
 
 def take_photo():
