@@ -46,7 +46,6 @@ def talk():
     text = play_voice("I like stickers")
     return jsonify({"response": "success"})
 
-@app.route('/capture', methods=["GET", 'POST'])
 def capture():
     print("Initiating capture... wait for camera to load.")
     capture_photo()
@@ -60,6 +59,3 @@ def capture():
     webbrowser.open_new(url)
 
     return response.json()
-
-if __name__ == '__main__':
-    app.run(debug=True)

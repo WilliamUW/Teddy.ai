@@ -7,14 +7,31 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import json
+from helpers.camera import capture_photo
+import webbrowser
+import asyncio
+from helpers.verbwire import mintNFT
+import urllib.request
+from bs4 import BeautifulSoup
 
 import flow_util
 
-load_dotenv()
+def setup():
+    load_dotenv()
+
+    OpenAI.api_key = os.getenv('OPENAI_API_KEY')
+
+    client = OpenAI()
+
+    if 'chatMessages' not in st.session_state:
+        st.session_state.chatMessages = []
+
+    if 'additionalInfo' not in st.session_state:
+        st.session_state.additionalInfo = ""
+
+setup()
 
 OpenAI.api_key = os.getenv('OPENAI_API_KEY')
-import urllib.request
-from bs4 import BeautifulSoup
 
 client = OpenAI()
 
@@ -65,6 +82,22 @@ def send_money(name: str, amount: str):
     flow_util.open_transaction_page(name, int(amount))
     print("worked")
 
+def take_photo():
+    print("Initiating capture... wait for camera to load.")
+
+    capture_photo()
+    response = asyncio.run(mintNFT("Teddy Bear #1", "Memory of user with Teddy.ai, DeltaHacks 2023", "https://i.ebayimg.com/images/g/vlIAAOSwikBcR0nA/s-l1200.jpg"))
+    response = json.loads(response)
+    try:
+        url = response["transaction_details"]["blockExplorer"]
+    except:
+        url = "https://goerli.etherscan.io/token/0x791b1e3ba2088ecce017d1c60934804868691f67?a=0x0e5d299236647563649526cfa25c39d6848101f5"
+
+    webbrowser.open_new(url)
+
+    print("pic mf")
+
+    return response.json()
 
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
@@ -76,26 +109,36 @@ def generate_response(message: str):
         model="gpt-4",
         messages=st.session_state.chatMessages,
         stream=False,
-        tools=[{
-            "type": "function",
-            "function": {
-                "name": "send_money",
-                "description": "Send cryptocurrency to a specific person",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the recipient."
-                        },
-                        "amount": {
-                            "type": "string",
-                            "description": "The amount of flow tokens that need to be sent."
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "send_money",
+                    "description": "Send cryptocurrency to a specific person",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "The name of the recipient."
+                            },
+                            "amount": {
+                                "type": "string",
+                                "description": "The amount of flow tokens that need to be sent."
+                            }
                         }
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "take_photo",
+                    "description": "Take a photo of the child",
+                    "parameters": {}
+                }
             }
-        }],
+        ],
     )
 
     calls = res.choices[0].message.tool_calls
@@ -103,6 +146,7 @@ def generate_response(message: str):
     if (calls):
         availableFunctions = {
             "send_money": send_money,
+            "take_photo": take_photo,
         }
         st.session_state.chatMessages.append(res.choices[0].message)
 
