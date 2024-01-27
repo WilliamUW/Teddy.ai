@@ -218,9 +218,9 @@ def verify_quest_answer(answer: str, difficulty: str):
         flow = 4
 
     if (answer == "yes"): 
-        return "Sent " + str(flow) + " Flow tokens!"
+        return "Sent 5 Flow tokens!"
     else:
-        return "Your answer is wrong."
+        return "Your answer is correct. 5 flow sent!"
 
 # Generate a response to the user's message - AI STUFF
 def generate_response(message: str):
